@@ -1,8 +1,6 @@
 # @microstack-dev/workflow
 
 ![npm version](https://img.shields.io/npm/v/@microstack-dev/workflow)
-![build status](https://img.shields.io/github/actions/status/microstack-dev/workflow)
-![coverage](https://img.shields.io/codecov/c/github/microstack-dev/workflow)
 ![license](https://img.shields.io/npm/l/@microstack-dev/workflow)
 ![downloads](https://img.shields.io/npm/dm/@microstack-dev/workflow)
 
