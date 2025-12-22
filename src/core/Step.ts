@@ -1,4 +1,5 @@
 import { Step } from './types';
+import { WorkflowContext } from './Context';
 
 export class StepBuilder {
   private step: Partial<Step> = {};
@@ -10,12 +11,12 @@ export class StepBuilder {
     this.step.id = id;
   }
 
-  run(fn: (_ctx: import('./Context').WorkflowContext) => Promise<void>): StepBuilder {
+  run(fn: (_ctx: WorkflowContext) => Promise<void>): StepBuilder {
     this.step.run = fn;
     return this;
   }
 
-  condition(fn: (_ctx: import('./Context').WorkflowContext) => boolean | Promise<boolean>): StepBuilder {
+  condition(fn: (_ctx: WorkflowContext) => boolean | Promise<boolean>): StepBuilder {
     this.step.condition = fn;
     return this;
   }

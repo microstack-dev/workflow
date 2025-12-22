@@ -1,4 +1,4 @@
-import { WorkflowEvent, WorkflowEventListener, WorkflowEventType } from '../core/types';
+import { TypedWorkflowEvent, WorkflowEventListener, WorkflowEventType } from '../core/types';
 
 export class EventEmitter {
   private listeners: Map<WorkflowEventType, Set<WorkflowEventListener>> = new Map();
@@ -20,7 +20,7 @@ export class EventEmitter {
     }
   }
 
-  async emit(event: WorkflowEvent & { type: WorkflowEventType }): Promise<void> {
+  async emit(event: TypedWorkflowEvent): Promise<void> {
     const eventListeners = this.listeners.get(event.type);
     if (eventListeners) {
       const promises = Array.from(eventListeners).map(async (listener) => {

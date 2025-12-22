@@ -5,6 +5,7 @@ export { createStep, StepBuilder } from './core/Step';
 export { defineWorkflow } from './defineWorkflow';
 export { EventEmitter } from './events/EventEmitter';
 export { WorkflowError } from './errors/WorkflowError';
+export { StepExecutionError } from './errors/StepExecutionError';
 export { StepError } from './errors/StepError';
 export { TimeoutError } from './errors/TimeoutError';
 export type { Step, WorkflowEvent, WorkflowEventType, WorkflowEventListener } from './core/types';

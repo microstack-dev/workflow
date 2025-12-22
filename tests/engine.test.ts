@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from '@jest/globals';
 import { WorkflowEngine } from '../src/core/Engine';
 import { createStep } from '../src/core/Step';
 import { defineWorkflow } from '../src/defineWorkflow';
-import { StepError, TimeoutError } from '../src/index';
+import { StepExecutionError, TimeoutError } from '../src/index';
 
 describe('WorkflowEngine', () => {
   let engine: WorkflowEngine;
@@ -132,7 +132,7 @@ describe('WorkflowEngine', () => {
         ]
       });
 
-      await expect(engine.run(workflow)).rejects.toThrow(StepError);
+      await expect(engine.run(workflow)).rejects.toThrow(StepExecutionError);
       expect(attempts).toBe(3);
     });
   });
@@ -241,7 +241,7 @@ describe('WorkflowEngine', () => {
   });
 
   describe('error handling', () => {
-    it('should wrap step errors in StepError', async () => {
+    it('should wrap step errors in StepExecutionError', async () => {
       const workflow = defineWorkflow({
         name: 'error-test',
         steps: [
@@ -251,7 +251,7 @@ describe('WorkflowEngine', () => {
         ]
       });
 
-      await expect(engine.run(workflow)).rejects.toThrow(StepError);
+      await expect(engine.run(workflow)).rejects.toThrow(StepExecutionError);
     });
 
     it('should preserve error context', async () => {
@@ -267,12 +267,71 @@ describe('WorkflowEngine', () => {
       try {
         await engine.run(workflow);
       } catch (error) {
-        expect(error).toBeInstanceOf(StepError);
-        if (error instanceof StepError) {
+        expect(error).toBeInstanceOf(StepExecutionError);
+        if (error instanceof StepExecutionError) {
           expect(error.stepId).toBe('error-step');
           expect(error.workflowName).toBe('error-context-test');
         }
       }
+    });
+
+    it('should preserve error context', async () => {
+      const workflow = defineWorkflow({
+        name: 'error-context-test',
+        steps: [
+          createStep('error-step').run(async () => {
+            throw new Error('Step error');
+          }).build()
+        ]
+      });
+
+      try {
+        await engine.run(workflow);
+      } catch (error) {
+        expect(error).toBeInstanceOf(StepExecutionError);
+        if (error instanceof StepExecutionError) {
+          expect(error.stepId).toBe('error-step');
+          expect(error.workflowName).toBe('error-context-test');
+        }
+      }
+    });
+
+    it('should propagate async errors correctly', async () => {
+      const workflow = defineWorkflow({
+        name: 'async-error-test',
+        steps: [
+          createStep('async-error-step').run(async () => {
+            await new Promise(resolve => setTimeout(resolve, 10));
+            throw new Error('Async step error');
+          }).build()
+        ]
+      });
+
+      await expect(engine.run(workflow)).rejects.toThrow(StepExecutionError);
+    });
+
+    it('should track step execution duration in events', async () => {
+      const events: any[] = [];
+
+      engine.on('step:start', (event) => { events.push({ eventType: 'start', event }); });
+      engine.on('step:success', (event) => { events.push({ eventType: 'success', event }); });
+
+      const workflow = defineWorkflow({
+        name: 'duration-test',
+        steps: [
+          createStep('duration-step').run(async () => {
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }).build()
+        ]
+      });
+
+      await engine.run(workflow);
+
+      expect(events).toHaveLength(2);
+      expect(events[0].eventType).toBe('start');
+      expect(events[1].eventType).toBe('success');
+      expect(typeof events[1].event.duration).toBe('number');
+      expect(events[1].event.duration).toBeGreaterThanOrEqual(45); // Allow some timing variance
     });
   });
 });
